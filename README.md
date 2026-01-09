@@ -10,12 +10,11 @@ https://moodle.vse.cz/course/view.php?id=7252
 ## Řešení IS ve vztahu k charakteru byznysu
 
 - _Poznámka: Tento bod se váže na řešení konkrétního problému firmy (buď z diplomové práce, nebo z nabízených vertikál jako strojírenství, retail, IT firma)._
-- [Formulace relevantních analytických otázek pro diskuse a interview se zákazníkem](reseni-is-ve-vztahu-k-charakteru-byznysu/formulace-analytickych-otazek.md)
-- [Určení vhodné metodiky či metody pro řešení projektu/úlohy s argumentací výběru](reseni-is-ve-vztahu-k-charakteru-byznysu/urceni-vhodne-metodiky.md)
-- [Charakteristika významných faktorů ovlivňujících řešení](reseni-is-ve-vztahu-k-charakteru-byznysu/charakteristika-faktoru-reseni.md)
-- [Specifikace potřebného kontextu řešení (vazby na ostatní oblasti řízení, externí subjekty)](reseni-is-ve-vztahu-k-charakteru-byznysu/specifikace-kontextu-reseni.md)
-- [Návrh vhodných typů aplikací (transakční, analytické, plánovací) a vymezení hlavních efektů a problémů](reseni-is-ve-vztahu-k-charakteru-byznysu/navrh-vhodnych-typu-aplikaci.md)
-- [Definice očekávaných ekonomických a mimoekonomických efektů](reseni-is-ve-vztahu-k-charakteru-byznysu/definice-ekonomickych-mimoekonomickych-efektu.md)
+- [Analytické otázky pro diskuse a interview se zákazníkem](reseni-is-ve-vztahu-k-charakteru-byznysu/vyukove_materialy/1_Analyticke_otazky.md)
+- [Metodiky a řízení projektů](reseni-is-ve-vztahu-k-charakteru-byznysu/vyukove_materialy/2_Metodiky_a_rizeni.md)
+- [Faktory a kontext řešení](reseni-is-ve-vztahu-k-charakteru-byznysu/vyukove_materialy/3_Faktory_a_kontext.md)
+- [Typy aplikací a efekty](reseni-is-ve-vztahu-k-charakteru-byznysu/vyukove_materialy/4_Aplikace_a_efekty.md)
+- [Přehled materiálů](reseni-is-ve-vztahu-k-charakteru-byznysu/vyukove_materialy/PREHLED.md)
 
 ## Řízení podnikové informatiky
 - [Principy a problémy řízení IT v podnicích](rizeni-podnikove-informatiky/principy-problemy-rizeni-it.md)

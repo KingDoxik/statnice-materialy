@@ -13,12 +13,3 @@ Předmět diskuse:
 ## Literatura
 
 - NOVOTNÝ, O., POUR, J., STANOVSKÁ, I.: IT a anatomie firmy - principy, v přípravě, el. publikace
-
-## Kapitoly
-
-- [Formulace relevantních analytických otázek pro diskuse a interview se zákazníkem](formulace-analytickych-otazek.md)
-- [Určení vhodné metodiky či metody pro řešení projektu/úlohy s argumentací výběru](urceni-vhodne-metodiky.md)
-- [Charakteristika významných faktorů ovlivňujících řešení](charakteristika-faktoru-reseni.md)
-- [Specifikace potřebného kontextu řešení](specifikace-kontextu-reseni.md)
-- [Návrh vhodných typů aplikací](navrh-vhodnych-typu-aplikaci.md)
-- [Definice očekávaných ekonomických a mimoekonomických efektů](definice-ekonomickych-mimoekonomickych-efektu.md)
