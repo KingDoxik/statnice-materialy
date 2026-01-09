@@ -1,0 +1,1 @@
+# Strategické řízení IT
