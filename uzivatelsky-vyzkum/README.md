@@ -2,6 +2,11 @@
 
 Kvalitativní metody (uživatelské rozhovory, uživatelské testování, expertní analýza, heuristická analýza) a kvantitativní metody (dotazníky, datová analytika). Kdy použít kterou metodu na základě výzkumných otázek a na základě fáze designového procesu. Research operations (ukládání citlivých dat, sdílení výzkumných poznatků, nástroje, předávání know-how (demokratizace výzkumu), rekrutace, prezentace (technika storytellingu, advokacie výzkumných poznatků).
 
+## Doporučený postup studia
+- Začni kapitolami **kvalitativní** a **kvantitativní** metody (co umí, jaké mají limity a typické výstupy).
+- Pak navazuj kapitolou **Volba metody** (rámec: typ otázky → fáze procesu → omezení → mix metod).
+- Nakonec **Research operations (ResearchOps)** (jak výzkum dělat bezpečně, opakovatelně a se skutečným dopadem).
+
 ## Literatura
 
 - Krug, S. (2012). Rocket Surgery Made Easy: The Do-It-Yourself Guide to Finding and Fixing Usability Problems. Berkeley, CA: New Riders, c2010. ISBN: 978-0-321-65729-9.
@@ -13,4 +18,4 @@ Kvalitativní metody (uživatelské rozhovory, uživatelské testování, expert
 - [Kvalitativní metody](kvalitativni-metody.md)
 - [Kvantitativní metody](kvantitativni-metody.md)
 - [Volba metody na základě výzkumných otázek a fáze designového procesu](volba-metody.md)
-- [Research operations](research-operations.md)
+- [Research operations (ResearchOps)](research-operations.md)
