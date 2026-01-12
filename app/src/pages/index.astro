@@ -1,0 +1,170 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const allChapters = await getCollection('subjects');
+
+// Group chapters by subject
+const subjectMap = new Map<string, { name: string; slug: string; chapters: typeof allChapters }>();
+
+for (const chapter of allChapters) {
+  const subjectSlug = chapter.data.subjectSlug;
+  if (!subjectMap.has(subjectSlug)) {
+    subjectMap.set(subjectSlug, {
+      name: chapter.data.subject,
+      slug: subjectSlug,
+      chapters: []
+    });
+  }
+  subjectMap.get(subjectSlug)!.chapters.push(chapter);
+}
+
+// Sort subjects by slug and chapters by order
+const subjects = Array.from(subjectMap.values()).sort((a, b) => a.slug.localeCompare(b.slug));
+for (const subject of subjects) {
+  subject.chapters.sort((a, b) => a.data.order - b.data.order);
+}
+---
+
+<Layout title="Prehled predmetu">
+  <div class="home-content">
+    <header class="home-header">
+      <h1>Statni zkouska IST - UX vyzkum a design</h1>
+      <p class="subtitle">Studijni materialy pro pripravu na statni zkousku z programu Informacni systemy a technologie</p>
+    </header>
+
+    <section class="subjects-grid">
+      {subjects.map((subject, index) => (
+        <a href={`/${subject.chapters[0].slug}`} class="subject-card">
+          <span class="subject-index">{index + 1}</span>
+          <h2 class="subject-title">{subject.name}</h2>
+          <p class="chapter-count">{subject.chapters.length} kapitol</p>
+          <ul class="chapter-preview">
+            {subject.chapters.slice(0, 3).map(chapter => (
+              <li>{chapter.data.title}</li>
+            ))}
+            {subject.chapters.length > 3 && (
+              <li class="more">+ {subject.chapters.length - 3} dalsich</li>
+            )}
+          </ul>
+        </a>
+      ))}
+    </section>
+  </div>
+</Layout>
+
+<style>
+  .home-content {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .home-header {
+    margin-bottom: 3rem;
+  }
+
+  .home-header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+  }
+
+  .subjects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .subject-card {
+    display: block;
+    padding: 1.5rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    position: relative;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .subject-card:hover {
+    border-color: var(--color-accent);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .subject-index {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .subject-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    padding-right: 2.5rem;
+    line-height: 1.4;
+  }
+
+  .chapter-count {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .chapter-preview {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .chapter-preview li {
+    padding: 0.25rem 0;
+    border-top: 1px solid var(--border);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chapter-preview li:first-child {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .chapter-preview .more {
+    color: var(--color-accent);
+    font-weight: 500;
+  }
+
+  @media (max-width: 768px) {
+    .home-header h1 {
+      font-size: 1.5rem;
+    }
+
+    .subjects-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

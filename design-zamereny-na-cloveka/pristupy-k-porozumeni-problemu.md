@@ -1,1 +1,0 @@
-# Přístupy k porozumění problému

@@ -1,1 +1,0 @@
-# Modelování business objektů

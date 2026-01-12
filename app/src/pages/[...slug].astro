@@ -1,0 +1,153 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const chapters = await getCollection('subjects');
+  return chapters.map(chapter => ({
+    params: { slug: chapter.slug },
+    props: { chapter },
+  }));
+}
+
+const { chapter } = Astro.props;
+const { Content, headings } = await render(chapter);
+
+// Get all chapters for navigation
+const allChapters = await getCollection('subjects');
+const sameSubjectChapters = allChapters
+  .filter(c => c.data.subjectSlug === chapter.data.subjectSlug)
+  .sort((a, b) => a.data.order - b.data.order);
+
+const currentIndex = sameSubjectChapters.findIndex(c => c.slug === chapter.slug);
+const prevChapter = currentIndex > 0 ? sameSubjectChapters[currentIndex - 1] : null;
+const nextChapter = currentIndex < sameSubjectChapters.length - 1 ? sameSubjectChapters[currentIndex + 1] : null;
+---
+
+<Layout title={chapter.data.title} currentSlug={chapter.slug} headings={headings}>
+  <div class="chapter-content">
+    <nav class="breadcrumb">
+      <a href="/">Domov</a>
+      <span class="separator">/</span>
+      <span class="current">{chapter.data.subject}</span>
+    </nav>
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    <nav class="chapter-nav">
+      {prevChapter ? (
+        <a href={`/${prevChapter.slug}`} class="nav-link prev">
+          <span class="nav-label">Predchozi kapitola</span>
+          <span class="nav-title">{prevChapter.data.title}</span>
+        </a>
+      ) : (
+        <div></div>
+      )}
+
+      {nextChapter ? (
+        <a href={`/${nextChapter.slug}`} class="nav-link next">
+          <span class="nav-label">Dalsi kapitola</span>
+          <span class="nav-title">{nextChapter.data.title}</span>
+        </a>
+      ) : (
+        <div></div>
+      )}
+    </nav>
+  </div>
+</Layout>
+
+<style>
+  .chapter-content {
+    max-width: var(--content-max);
+    margin: 0 auto;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  .breadcrumb a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  .separator {
+    color: var(--border);
+  }
+
+  .chapter-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .nav-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    max-width: 45%;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .nav-link:hover {
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-md);
+  }
+
+  .nav-link.prev {
+    text-align: left;
+  }
+
+  .nav-link.next {
+    text-align: right;
+    margin-left: auto;
+  }
+
+  .nav-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .nav-title {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  @media (max-width: 768px) {
+    .chapter-nav {
+      flex-direction: column;
+    }
+
+    .nav-link {
+      max-width: 100%;
+    }
+
+    .nav-link.next {
+      margin-left: 0;
+    }
+  }
+</style>

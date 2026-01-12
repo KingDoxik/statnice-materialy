@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment variables
+.env
+
+# Temp files (intermediate AI outputs)
+temp/*
+!temp/.gitkeep
+
+# Bun
+bun.lockb
+
+# IDE
+.idea/
+.vscode/

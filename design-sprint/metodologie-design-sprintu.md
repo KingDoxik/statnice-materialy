@@ -1,1 +1,0 @@
-# Metodologie design sprintu

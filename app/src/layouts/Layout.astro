@@ -1,0 +1,153 @@
+---
+import '../styles/global.css';
+import Sidebar from '../components/Sidebar.astro';
+import ThemeToggle from '../components/ThemeToggle.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  title: string;
+  currentSlug?: string;
+  headings?: Heading[];
+}
+
+const { title, currentSlug, headings = [] } = Astro.props;
+---
+
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Studijni materialy pro statni zkousku - IST UX vyzkum a design" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="theme-color" content="#faf9f7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1a1a1a" media="(prefers-color-scheme: dark)" />
+    <title>{title} | Statnice IST UX</title>
+    <!-- Prevent flash of wrong theme -->
+    <script is:inline>
+      (function() {
+        const theme = localStorage.getItem('theme') ||
+          (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Preskocit na obsah</a>
+    <div class="app-container">
+      <Sidebar currentSlug={currentSlug} />
+
+      <main class="main-content" id="main">
+        <header class="content-header">
+          <ThemeToggle />
+        </header>
+
+        <div class:list={["content-wrapper", headings.length > 0 ? "has-toc" : "no-toc"]}>
+          <article class="content-article">
+            <slot />
+          </article>
+
+          {headings.length > 0 && (
+            <aside class="toc-sidebar">
+              <TableOfContents headings={headings} />
+            </aside>
+          )}
+        </div>
+      </main>
+    </div>
+
+    <style>
+      .app-container {
+        display: flex;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .main-content {
+        flex: 1;
+        margin-left: var(--sidebar-width);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .content-header {
+        position: sticky;
+        top: 0;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        padding: 0.75rem var(--page-gutter);
+        background: color-mix(in srgb, var(--bg) 88%, transparent);
+        backdrop-filter: saturate(160%) blur(10px);
+        border-bottom: 1px solid var(--border);
+        z-index: 50;
+      }
+
+      .content-wrapper {
+        flex: 1;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: clamp(1.5rem, 2.5vw, 2.5rem);
+        width: 100%;
+        max-width: var(--layout-max);
+        margin: 0 auto;
+        padding: 0 var(--page-gutter);
+      }
+
+      .content-wrapper.has-toc {
+        grid-template-columns: minmax(0, 1fr) var(--toc-width);
+      }
+
+      .content-article {
+        padding: 2rem 0;
+        max-width: 100%;
+        min-width: 0;
+      }
+
+      .toc-sidebar {
+        padding: 2rem 0;
+      }
+
+      @supports not ((-webkit-backdrop-filter: blur(10px)) or (backdrop-filter: blur(10px))) {
+        .content-header {
+          background: var(--bg);
+        }
+      }
+
+      @media (max-width: 1024px) {
+        .toc-sidebar {
+          display: none;
+        }
+
+        .content-wrapper.has-toc {
+          grid-template-columns: minmax(0, 1fr);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .main-content {
+          margin-left: 0;
+        }
+
+        .content-header {
+          padding: 0.75rem 1rem;
+          padding-left: 4rem; /* Space for mobile menu toggle */
+        }
+
+        .content-article {
+          padding: 1.5rem 0;
+        }
+      }
+    </style>
+  </body>
+</html>

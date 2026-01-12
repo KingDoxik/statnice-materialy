@@ -1,1 +1,0 @@
-# Použitelnost a přístupnost

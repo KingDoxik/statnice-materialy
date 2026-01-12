@@ -1,1 +1,0 @@
-# Přístupnost a nástroje

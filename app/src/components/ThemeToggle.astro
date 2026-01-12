@@ -1,0 +1,106 @@
+---
+---
+
+<button
+  class="theme-toggle"
+  id="theme-toggle"
+  aria-label="Toggle dark mode"
+  title="Toggle dark mode"
+>
+  <svg class="sun-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="10" cy="10" r="3.5" stroke="currentColor" stroke-width="1.5"/>
+    <path d="M10 2V4M10 16V18M18 10H16M4 10H2M15.66 4.34L14.24 5.76M5.76 14.24L4.34 15.66M15.66 15.66L14.24 14.24M5.76 5.76L4.34 4.34" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
+  <svg class="moon-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M17.293 13.293A8 8 0 116.707 2.707a8.001 8.001 0 1010.586 10.586z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+
+<style>
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    box-shadow: var(--shadow-md);
+  }
+
+  .sun-icon {
+    display: none;
+  }
+
+  .moon-icon {
+    display: block;
+  }
+
+  :global(.dark) .sun-icon {
+    display: block;
+  }
+
+  :global(.dark) .moon-icon {
+    display: none;
+  }
+</style>
+
+<script is:inline>
+  // Theme toggle logic (does NOT persist unless user toggles)
+  (function() {
+    const toggle = document.getElementById('theme-toggle');
+
+    function getStoredTheme() {
+      try {
+        return localStorage.getItem('theme');
+      } catch {
+        return null;
+      }
+    }
+
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function applyTheme(theme) {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+
+      toggle?.setAttribute('aria-pressed', theme === 'dark' ? 'true' : 'false');
+      toggle?.setAttribute('title', theme === 'dark' ? 'Prepnout na svetly rezim' : 'Prepnout na tmavy rezim');
+    }
+
+    // Set initial theme (no persistence)
+    const stored = getStoredTheme();
+    applyTheme(stored ?? (media.matches ? 'dark' : 'light'));
+
+    // Toggle handler
+    toggle?.addEventListener('click', () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      const next = isDark ? 'light' : 'dark';
+      applyTheme(next);
+      try {
+        localStorage.setItem('theme', next);
+      } catch {
+        // ignore
+      }
+    });
+
+    // Listen for system preference changes
+    media.addEventListener('change', (e) => {
+      if (!getStoredTheme()) applyTheme(e.matches ? 'dark' : 'light');
+    });
+  })();
+</script>
