@@ -9,14 +9,15 @@ import {
 
 export async function generateSummaryOutline(
   subject: SubjectContent,
-  outputPath?: string
+  outputPath?: string,
+  knowledgeAreas?: string
 ): Promise<PassResult> {
   const model = getModel();
 
   const result = streamText({
     model,
     system: SUMMARY_OUTLINE_SYSTEM_PROMPT,
-    prompt: buildSummaryOutlineUserPrompt(subject),
+    prompt: buildSummaryOutlineUserPrompt(subject, knowledgeAreas),
     temperature: AI_CONFIG.temperature,
     maxTokens: AI_CONFIG.maxTokens,
   });

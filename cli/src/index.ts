@@ -91,13 +91,29 @@ async function main() {
         process.exit(0);
       }
 
+      // Ask for knowledge areas/topics to focus on
+      const knowledgeAreasInput = await p.text({
+        message: "Vložte okruhy znalostí, na které se má shrnutí zaměřit (nebo nechte prázdné):",
+        placeholder: "Např: 1. Proces designového myšlení\n2. Metody výzkumu...",
+      });
+
+      if (p.isCancel(knowledgeAreasInput)) {
+        p.cancel("Summary generation cancelled.");
+        process.exit(0);
+      }
+
+      const knowledgeAreas = knowledgeAreasInput?.trim() || undefined;
+
       p.log.info(`\nGenerating summary for: ${pc.cyan(subject.name)}`);
       p.log.info(
         `Synthesizing ${subject.chapters.length} chapters (${(subject.totalCharCount / 1000).toFixed(1)}k chars)`
       );
+      if (knowledgeAreas) {
+        p.log.info(`Focusing on provided knowledge areas`);
+      }
 
       try {
-        await runSummaryPipeline(subject);
+        await runSummaryPipeline(subject, knowledgeAreas);
         p.outro(pc.green("Summary generation completed successfully!"));
       } catch (error) {
         p.log.error(

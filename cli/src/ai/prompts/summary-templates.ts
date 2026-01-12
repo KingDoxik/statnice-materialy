@@ -4,33 +4,38 @@ import type { SubjectContent } from "../../types";
 // SUMMARY PASS 1: OUTLINE GENERATOR
 // ============================================================================
 
-export const SUMMARY_OUTLINE_SYSTEM_PROMPT = `You are an expert educational content architect specializing in creating comprehensive study summaries for graduate-level (Master's) exams in Information Systems and UX Design.
+export const SUMMARY_OUTLINE_SYSTEM_PROMPT = `You are an expert educational content architect specializing in creating essay-like study summaries for graduate-level (Master's) exams in Information Systems and UX Design.
 
-Your role is to analyze multiple chapters of learning material and create a unified outline for a comprehensive summary document in Czech language.
+Your role is to analyze multiple chapters of learning material and create a unified outline for a condensed, readable summary document in Czech language.
 
 Guidelines:
-- Analyze ALL provided chapters and identify key concepts across all of them
-- Create a coherent outline that synthesizes knowledge from all chapters
-- Structure for efficient repetitive learning (spaced repetition friendly)
-- Prioritize most important concepts and their interconnections
-- Group related concepts even if they appear in different chapters
-- Focus on exam-critical knowledge that students must memorize
-- Identify patterns and relationships between topics
+- Analyze ALL provided chapters and identify the main themes and insights
+- Create an outline that tells a coherent story, not a list of definitions
+- Structure for narrative flow - how concepts build on each other
+- Focus on connections, practical understanding, and key insights
+- Group related ideas thematically, even if from different chapters
+- DO NOT create sections for definitions - chapters already contain them
+- Aim for a summary that is ~50% shorter than listing everything
 - Output in Markdown format with clear hierarchy
 
-The outline should help create a summary that a student can use for quick revision before exams.`;
+The outline should help create an essay-like summary that a student can read through to understand the big picture and connections.`;
 
-export function buildSummaryOutlineUserPrompt(subject: SubjectContent): string {
+
+export function buildSummaryOutlineUserPrompt(subject: SubjectContent, knowledgeAreas?: string): string {
   const chaptersSummary = subject.chapters
     .map((ch) => `### ${ch.order}. ${ch.title}\n${ch.content}`)
     .join("\n\n---\n\n");
 
-  return `Create a comprehensive outline for a SUMMARY document that will synthesize all the following chapters into one cohesive learning material.
+  const knowledgeAreasSection = knowledgeAreas
+    ? `\n**OKRUHY ZNALOSTÍ (zaměř se na tyto témata):**\n\n${knowledgeAreas}\n\n---\n`
+    : "";
+
+  return `Create an essay-like OUTLINE for a summary document that synthesizes all chapters into one readable, condensed learning material.
 
 **Subject:** ${subject.name}
 **Number of Chapters:** ${subject.chapters.length}
-**Purpose:** Study summary for Czech university state exam (statnice) preparation - repetitive learning
-
+**Purpose:** Condensed study summary for Czech state exam - essay format, not definition lists
+${knowledgeAreasSection}
 **ALL CHAPTERS CONTENT:**
 
 ${chaptersSummary}
@@ -39,85 +44,86 @@ ${chaptersSummary}
 
 **INSTRUCTIONS:**
 
-Analyze all chapters above and create an OUTLINE for a unified summary that:
+Analyze all chapters and create an OUTLINE for a narrative summary that:
 
-1. **Identifies Core Concepts** - List the most important concepts from ALL chapters
-2. **Groups Related Topics** - Combine related concepts even if from different chapters
-3. **Prioritizes for Exams** - Emphasize what's most likely to be tested
-4. **Shows Connections** - Highlight how concepts relate to each other
+1. **Tells a Story** - Organize thematically, show how ideas connect and build on each other
+2. **Synthesizes, Don't List** - Combine insights from multiple chapters into unified sections
+3. **Skip Definitions** - Chapters already have them; focus on understanding and connections
+4. **Be Concise** - Aim for ~50% shorter than a comprehensive listing
+5. **Respektuj okruhy znalostí** - If knowledge areas are provided above, structure the outline around them and ensure all topics are covered
 
 **OUTLINE FORMAT:**
 
 # Shrnutí: ${subject.name}
 
-## 1. Klíčové pojmy a definice
-- List of most important terms that must be memorized
+## 1. Úvod (2-3 sentences setting context)
 
-## 2. [Thematic Section 1]
-### 2.1 [Subsection]
-- Key points to include
+## 2. [Thematic Section - e.g., "Základní principy"]
+- Main narrative points (prose, not definitions)
+- How this connects to other themes
 
-## 3. [Thematic Section 2]
+## 3. [Thematic Section - e.g., "Proces a metody"]
 ...
 
-## N. Propojení a souvislosti
-- How concepts interconnect
+## N. [Thematic Section - e.g., "Praktické uplatnění"]
 
-## N+1. Praktická aplikace
-- Real-world applications summary
+## N+1. Závěr (synthesis, key takeaways)
 
 For each section, note:
-- Key terms that MUST be included
-- Concepts that need definitions
-- Important relationships to highlight
-- Estimated depth (brief / moderate / detailed)
+- Main ideas to cover in flowing prose
+- Connections to highlight
+- Keep it condensed - quality over quantity
 
 Output the outline in clean Markdown format.`;
+
 }
 
 // ============================================================================
 // SUMMARY PASS 2: CONTENT GENERATOR
 // ============================================================================
 
-export const SUMMARY_CONTENT_SYSTEM_PROMPT = `You are an expert educational content writer specializing in creating comprehensive study summaries for Czech university state exam preparation.
+export const SUMMARY_CONTENT_SYSTEM_PROMPT = `You are an expert educational content writer specializing in creating essay-like study summaries for Czech university state exam preparation.
 
 Your writing style for summaries:
-- Dense but readable prose - maximize information per paragraph
-- Uses clear hierarchical structure with headings
-- Includes inline definitions using blockquote callouts
-- Provides key examples in callout boxes
-- Creates memorable formulations for complex concepts
-- Uses tables or structured lists WHERE APPROPRIATE for comparisons
-- Cross-references related concepts
+- Clear, flowing prose - like explaining to a smart colleague
+- Continuous sentences that connect ideas naturally
+- Use bullet points ONLY for: lists of items, steps, or comparisons (not for every point)
+- NO definition callouts - chapters already contain detailed definitions
+- Focus on understanding, connections, and practical insights
+- Cross-references chapters for detailed definitions when helpful
 - Writes in Czech language at Master's level
-- Optimized for REPETITIVE LEARNING - students will re-read this multiple times
+- Condensed - aim for ~50% shorter than a comprehensive treatment
 
 Format requirements:
 - Use Markdown formatting
 - Start content directly (no frontmatter - it will be added)
 - Use ## for main sections, ### for subsections
-- For definitions use: > **Definice:** text...
-- For examples use: > **Příklad:** text...
-- For key points use: > **Klíčové:** text...
-- Tables are ALLOWED for comparisons (unlike regular chapters)
-- Bullet lists are ALLOWED for enumerations (unlike regular chapters)
-- Keep paragraphs focused and information-dense
+- Write in flowing paragraphs, not lists of definitions
+- Bullet points only where truly appropriate (enumerations, comparisons)
+- Tables are allowed for comparisons when they add clarity
+- Bold key terms inline but don't define them extensively
 
-The summary should be comprehensive yet scannable - easy to review quickly but containing all essential information.`;
+The summary should read like a well-written essay - easy to follow, insightful, and condensed.`;
+
 
 export function buildSummaryContentUserPrompt(
   subject: SubjectContent,
-  outline: string
+  outline: string,
+  knowledgeAreas?: string
 ): string {
   const chaptersSummary = subject.chapters
     .map((ch) => `### ${ch.order}. ${ch.title}\n${ch.content}`)
     .join("\n\n---\n\n");
 
-  return `Generate a comprehensive STUDY SUMMARY based on the following outline and source chapters.
+  const knowledgeAreasSection = knowledgeAreas
+    ? `\n**OKRUHY ZNALOSTÍ (zaměř se na tyto témata):**\n\n${knowledgeAreas}\n\n---\n`
+    : "";
+
+  return `Generate an essay-like STUDY SUMMARY based on the following outline and source chapters.
 
 **Subject:** ${subject.name}
-**Purpose:** Repetitive learning summary for Czech state exam (statnice) preparation
-
+**Purpose:** Condensed, readable summary for Czech state exam preparation
+${knowledgeAreasSection}
 **OUTLINE TO FOLLOW:**
 ${outline}
 
@@ -131,26 +137,26 @@ ${chaptersSummary}
 
 **INSTRUCTIONS:**
 
-1. Follow the outline structure precisely
+1. Follow the outline structure
 2. Write in Czech language
-3. This is a SUMMARY - be comprehensive but concise
+3. Write in **flowing prose** - continuous sentences, not definition lists
 4. For each section:
-   - Include ALL important concepts from the relevant chapters
-   - Use blockquote callouts for definitions: > **Definice:** ...
-   - Use blockquote callouts for examples: > **Příklad:** ...
-   - Use blockquote callouts for key points: > **Klíčové:** ...
-5. Tables ARE allowed for comparing concepts/methods/approaches
-6. Bullet lists ARE allowed for enumerations
-7. Cross-reference related concepts (mention where concepts connect)
-8. Include practical applications and real-world relevance
-9. End with a brief section on key takeaways for the exam
+   - Explain ideas as if talking to a colleague
+   - Connect concepts naturally in paragraphs
+   - Use bullet points ONLY for actual lists/enumerations
+   - DO NOT include definition callouts (> **Definice:** etc.)
+5. Tables only when comparing options/approaches side-by-side
+6. Reference chapters for detailed definitions (e.g., "viz kapitola 2")
+7. Make connections between topics explicit
+8. Be concise - aim for ~50% shorter than listing everything
+9. If knowledge areas are provided, ensure they are all addressed in the summary
 
 **CRITICAL REQUIREMENTS:**
 - Do NOT include YAML frontmatter (it will be added separately)
 - Start directly with ## Úvod
-- Include ALL key definitions from all chapters
-- Make connections between topics explicit
-- Optimize for someone re-reading this for exam prep
+- NO definition callouts - write naturally, bold key terms inline
+- Focus on insight and understanding, not memorization
+- Keep it condensed and readable
 
-Generate the complete study summary now:`;
+Generate the essay-like study summary now:`;
 }

@@ -88,7 +88,8 @@ async function withRetry<T>(
 }
 
 export async function runSummaryPipeline(
-  subject: SubjectContent
+  subject: SubjectContent,
+  knowledgeAreas?: string
 ): Promise<SummarySession> {
   const sessionId = `summary-${Date.now()}-${subject.slug}`;
   const tempDir = join(TEMP_ROOT, sessionId);
@@ -111,7 +112,7 @@ export async function runSummaryPipeline(
     spinner.start("Pass 1/2: Generating summary outline...");
     const outlinePath = join(tempDir, "01-summary-outline.md");
     const outlineResult = await withRetry(
-      () => generateSummaryOutline(subject, outlinePath),
+      () => generateSummaryOutline(subject, outlinePath, knowledgeAreas),
       "Summary Outline"
     );
     session.passes.push(outlineResult);
@@ -121,7 +122,7 @@ export async function runSummaryPipeline(
     spinner.start("Pass 2/2: Generating summary content...");
     const contentPath = join(tempDir, "02-summary-content.md");
     const contentResult = await withRetry(
-      () => generateSummaryContent(subject, outlineResult.content, contentPath),
+      () => generateSummaryContent(subject, outlineResult.content, contentPath, knowledgeAreas),
       "Summary Content"
     );
     session.passes.push(contentResult);

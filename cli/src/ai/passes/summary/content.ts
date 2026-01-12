@@ -10,7 +10,8 @@ import {
 export async function generateSummaryContent(
   subject: SubjectContent,
   outline: string,
-  outputPath?: string
+  outputPath?: string,
+  knowledgeAreas?: string
 ): Promise<PassResult> {
   const model = getModel();
 
@@ -20,7 +21,7 @@ export async function generateSummaryContent(
   const result = streamText({
     model,
     system: SUMMARY_CONTENT_SYSTEM_PROMPT,
-    prompt: buildSummaryContentUserPrompt(subject, outline),
+    prompt: buildSummaryContentUserPrompt(subject, outline, knowledgeAreas),
     temperature: AI_CONFIG.temperature,
     maxTokens: summaryMaxTokens,
   });
