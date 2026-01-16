@@ -1,0 +1,567 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  let questions: Awaited<ReturnType<typeof getCollection<'questions'>>> = [];
+  try {
+    questions = await getCollection('questions');
+  } catch {
+    return [];
+  }
+
+  return questions.map(question => ({
+    params: {
+      subject: question.data.subjectSlug,
+      order: String(question.data.order)
+    },
+    props: { question },
+  }));
+}
+
+const { question } = Astro.props;
+const { Content } = await render(question);
+
+// Get all questions for this subject for navigation
+let allQuestions: Awaited<ReturnType<typeof getCollection<'questions'>>> = [];
+try {
+  allQuestions = await getCollection('questions');
+} catch {
+  allQuestions = [];
+}
+
+const subjectQuestions = allQuestions
+  .filter(q => q.data.subjectSlug === question.data.subjectSlug)
+  .sort((a, b) => a.data.order - b.data.order);
+
+const currentIndex = subjectQuestions.findIndex(q => q.data.order === question.data.order);
+const totalQuestions = subjectQuestions.length;
+const prevQuestion = currentIndex > 0 ? subjectQuestions[currentIndex - 1] : null;
+const nextQuestion = currentIndex < subjectQuestions.length - 1 ? subjectQuestions[currentIndex + 1] : null;
+---
+
+<Layout title={`Otázka ${question.data.order} - ${question.data.subject}`}>
+  <div class="exam-page">
+    <nav class="breadcrumb">
+      <a href="/">Domov</a>
+      <span class="separator">/</span>
+      <a href="/exam">Zkouškový mód</a>
+      <span class="separator">/</span>
+      <span class="current">{question.data.subject}</span>
+    </nav>
+
+    <div class="question-card">
+      <header class="question-header">
+        <span class="question-number">Otázka {question.data.order} / {totalQuestions}</span>
+        <label class="practiced-toggle">
+          <input
+            type="checkbox"
+            id="practiced-checkbox"
+            data-subject={question.data.subjectSlug}
+            data-order={question.data.order}
+          />
+          <span class="toggle-label">Procvičeno</span>
+        </label>
+      </header>
+
+      <div class="question-text">
+        <p>{question.data.question}</p>
+      </div>
+
+      <button class="reveal-button" id="reveal-button">
+        <span class="reveal-text">Zobrazit odpověď</span>
+        <svg class="reveal-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M5 7.5L10 12.5L15 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="answer-section" id="answer-section">
+      <div class="answer-content prose">
+        <Content />
+      </div>
+      <button class="hide-button" id="hide-button">Skrýt odpověď</button>
+    </div>
+
+    <nav class="question-nav">
+      {prevQuestion ? (
+        <a href={`/exam/${prevQuestion.data.subjectSlug}/${prevQuestion.data.order}`} class="nav-link prev">
+          <span class="nav-label">Předchozí otázka</span>
+          <span class="nav-title">{prevQuestion.data.title}</span>
+        </a>
+      ) : (
+        <div></div>
+      )}
+
+      {nextQuestion ? (
+        <a href={`/exam/${nextQuestion.data.subjectSlug}/${nextQuestion.data.order}`} class="nav-link next">
+          <span class="nav-label">Další otázka</span>
+          <span class="nav-title">{nextQuestion.data.title}</span>
+        </a>
+      ) : (
+        <a href="/exam" class="nav-link next">
+          <span class="nav-label">Konec</span>
+          <span class="nav-title">Zpět na přehled</span>
+        </a>
+      )}
+    </nav>
+
+    <div class="question-list-toggle">
+      <button id="show-all-questions">Zobrazit všechny otázky ({totalQuestions})</button>
+    </div>
+
+    <div class="question-list-panel" id="question-list-panel">
+      <h3>Všechny otázky - {question.data.subject}</h3>
+      <ul class="question-list">
+        {subjectQuestions.map((q, index) => (
+          <li>
+            <a
+              href={`/exam/${q.data.subjectSlug}/${q.data.order}`}
+              class:list={["question-list-item", q.data.order === question.data.order && "active"]}
+              data-order={q.data.order}
+            >
+              <span class="item-number">{index + 1}.</span>
+              <span class="item-title">{q.data.title}</span>
+              <span class="item-check" data-subject={q.data.subjectSlug} data-order={q.data.order}></span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const revealButton = document.getElementById('reveal-button');
+  const hideButton = document.getElementById('hide-button');
+  const answerSection = document.getElementById('answer-section');
+  const practicedCheckbox = document.getElementById('practiced-checkbox') as HTMLInputElement;
+  const showAllButton = document.getElementById('show-all-questions');
+  const questionListPanel = document.getElementById('question-list-panel');
+
+  // Progress helpers
+  function getProgress() {
+    const data = localStorage.getItem('exam-progress');
+    return data ? JSON.parse(data) : {};
+  }
+
+  function saveProgress(progress: Record<string, { practiced: number[]; lastQuestion: number }>) {
+    localStorage.setItem('exam-progress', JSON.stringify(progress));
+  }
+
+  function isPracticed(subject: string, order: number): boolean {
+    const progress = getProgress();
+    return progress[subject]?.practiced?.includes(order) || false;
+  }
+
+  function markPracticed(subject: string, order: number, practiced: boolean) {
+    const progress = getProgress();
+    if (!progress[subject]) {
+      progress[subject] = { practiced: [], lastQuestion: order };
+    }
+
+    const idx = progress[subject].practiced.indexOf(order);
+    if (practiced && idx === -1) {
+      progress[subject].practiced.push(order);
+    } else if (!practiced && idx !== -1) {
+      progress[subject].practiced.splice(idx, 1);
+    }
+
+    progress[subject].lastQuestion = order;
+    saveProgress(progress);
+    updateCheckmarks();
+  }
+
+  function updateCheckmarks() {
+    document.querySelectorAll('.item-check').forEach(el => {
+      const subject = el.getAttribute('data-subject');
+      const order = parseInt(el.getAttribute('data-order') || '0');
+      if (subject && isPracticed(subject, order)) {
+        el.classList.add('checked');
+      } else {
+        el.classList.remove('checked');
+      }
+    });
+  }
+
+  // Initialize checkbox state
+  if (practicedCheckbox) {
+    const subject = practicedCheckbox.getAttribute('data-subject') || '';
+    const order = parseInt(practicedCheckbox.getAttribute('data-order') || '0');
+    practicedCheckbox.checked = isPracticed(subject, order);
+
+    practicedCheckbox.addEventListener('change', () => {
+      markPracticed(subject, order, practicedCheckbox.checked);
+    });
+  }
+
+  // Reveal/hide answer
+  revealButton?.addEventListener('click', () => {
+    answerSection?.classList.add('visible');
+    revealButton.classList.add('hidden');
+  });
+
+  hideButton?.addEventListener('click', () => {
+    answerSection?.classList.remove('visible');
+    revealButton?.classList.remove('hidden');
+  });
+
+  // Question list toggle
+  showAllButton?.addEventListener('click', () => {
+    questionListPanel?.classList.toggle('visible');
+    showAllButton.textContent = questionListPanel?.classList.contains('visible')
+      ? 'Skrýt otázky'
+      : `Zobrazit všechny otázky (${document.querySelectorAll('.question-list-item').length})`;
+  });
+
+  // Initialize checkmarks
+  updateCheckmarks();
+</script>
+
+<style>
+  .exam-page {
+    max-width: var(--content-max);
+    margin: 0 auto;
+  }
+
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+  }
+
+  .breadcrumb a {
+    color: var(--color-accent);
+    text-decoration: none;
+  }
+
+  .breadcrumb a:hover {
+    text-decoration: underline;
+  }
+
+  .separator {
+    color: var(--border);
+  }
+
+  .question-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .question-number {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .practiced-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+  }
+
+  .practiced-toggle input {
+    width: 1.125rem;
+    height: 1.125rem;
+    accent-color: var(--color-accent);
+  }
+
+  .toggle-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+  }
+
+  .question-text {
+    margin-bottom: 2rem;
+  }
+
+  .question-text p {
+    font-size: 1.25rem;
+    line-height: 1.6;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .reveal-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem 1.5rem;
+    background: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+  }
+
+  .reveal-button:hover {
+    background: var(--color-accent-hover);
+  }
+
+  .reveal-button:active {
+    transform: scale(0.98);
+  }
+
+  .reveal-button.hidden {
+    display: none;
+  }
+
+  .reveal-icon {
+    transition: transform 0.2s ease;
+  }
+
+  /* Answer section */
+  .answer-section {
+    display: none;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .answer-section.visible {
+    display: block;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .answer-content {
+    margin-bottom: 1.5rem;
+  }
+
+  .hide-button {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--bg-soft);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .hide-button:hover {
+    background: var(--bg-elevated);
+    border-color: var(--color-accent);
+    color: var(--text);
+  }
+
+  /* Navigation */
+  .question-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .nav-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    max-width: 45%;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .nav-link:hover {
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-md);
+  }
+
+  .nav-link.prev {
+    text-align: left;
+  }
+
+  .nav-link.next {
+    text-align: right;
+    margin-left: auto;
+  }
+
+  .nav-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .nav-title {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  /* Question list */
+  .question-list-toggle {
+    text-align: center;
+    margin-top: 2rem;
+  }
+
+  .question-list-toggle button {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    color: var(--color-accent);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .question-list-toggle button:hover {
+    background: var(--bg-elevated);
+    border-color: var(--color-accent);
+  }
+
+  .question-list-panel {
+    display: none;
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+  }
+
+  .question-list-panel.visible {
+    display: block;
+  }
+
+  .question-list-panel h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text);
+  }
+
+  .question-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .question-list-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    color: var(--text);
+    transition: background-color 0.15s ease;
+  }
+
+  .question-list-item:hover {
+    background: var(--bg-soft);
+  }
+
+  .question-list-item.active {
+    background: rgba(79, 109, 122, 0.1);
+    color: var(--color-accent);
+  }
+
+  .item-number {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    width: 2rem;
+  }
+
+  .item-title {
+    flex: 1;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .item-check {
+    flex-shrink: 0;
+    width: 1.25rem;
+    height: 1.25rem;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    transition: all 0.2s ease;
+  }
+
+  .item-check.checked {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+
+  .item-check.checked::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+    background-size: 70%;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+
+  @media (max-width: 768px) {
+    .question-card {
+      padding: 1.5rem;
+    }
+
+    .question-text p {
+      font-size: 1.125rem;
+    }
+
+    .question-nav {
+      flex-direction: column;
+    }
+
+    .nav-link {
+      max-width: 100%;
+    }
+
+    .nav-link.next {
+      margin-left: 0;
+    }
+  }
+</style>

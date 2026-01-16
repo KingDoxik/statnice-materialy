@@ -6,7 +6,8 @@ import type { IncompleteSession } from "../content/session";
 export type MainAction =
   | { type: "new"; files: ContentFile[] }
   | { type: "resume"; session: IncompleteSession }
-  | { type: "summary"; subject: SubjectContent };
+  | { type: "summary"; subject: SubjectContent }
+  | { type: "questions"; subject: SubjectContent; requirements: string };
 
 export async function selectMainAction(
   groups: SubjectGroup[],
@@ -27,7 +28,8 @@ export async function selectMainAction(
 
   options.push(
     { value: "new", label: "Generate content for chapters" },
-    { value: "summary", label: "Generate subject summaries", hint: "Create 00-shrnuti.md" }
+    { value: "summary", label: "Generate subject summaries", hint: "Create 00-shrnuti.md" },
+    { value: "questions", label: "Generate exam questions", hint: "Create mock exam Q&A" }
   );
 
   const action = await p.select({
@@ -48,6 +50,11 @@ export async function selectMainAction(
   if (action === "summary") {
     const subject = await selectSubjectForSummary(groups);
     return { type: "summary", subject };
+  }
+
+  if (action === "questions") {
+    const { subject, requirements } = await selectSubjectForQuestions(groups);
+    return { type: "questions", subject, requirements };
   }
 
   // New generation flow
@@ -110,6 +117,90 @@ function aggregateSubjectContent(group: SubjectGroup): SubjectContent {
     chapters,
     totalCharCount: chapters.reduce((sum, ch) => sum + ch.content.length, 0),
   };
+}
+
+async function selectSubjectForQuestions(
+  groups: SubjectGroup[]
+): Promise<{ subject: SubjectContent; requirements: string }> {
+  // Filter to subjects that have content (chapters with actual content)
+  const subjectsWithContent = groups.filter((g) =>
+    g.files.some((f) => f.content.trim().length > 100)
+  );
+
+  if (subjectsWithContent.length === 0) {
+    p.log.warn("No subjects with generated content found. Generate chapter content first.");
+    process.exit(0);
+  }
+
+  const selectedSubject = await p.select({
+    message: "Select a subject to generate questions for:",
+    options: subjectsWithContent.map((g) => {
+      const filesWithContent = g.files.filter((f) => f.content.trim().length > 100);
+      return {
+        value: g.slug,
+        label: `${g.name} (${filesWithContent.length}/${g.files.length} chapters)`,
+      };
+    }),
+  });
+
+  if (p.isCancel(selectedSubject)) {
+    p.cancel("Operation cancelled.");
+    process.exit(0);
+  }
+
+  // Get aggregated content
+  const subject = groups.find((g) => g.slug === selectedSubject)!;
+  const subjectContent = aggregateSubjectContent(subject);
+
+  // Ask for requirements input
+  p.log.info(pc.dim("\nPaste the official requirements (okruhy znalostí)."));
+  p.log.info(pc.dim("Press Enter twice when done.\n"));
+
+  const requirementsInput = await p.text({
+    message: "Official requirements:",
+    placeholder: "Student musí znát základní principy...",
+    validate: (value) => {
+      if (!value || value.trim().length < 20) {
+        return "Please provide the official requirements (at least 20 characters).";
+      }
+    },
+  });
+
+  if (p.isCancel(requirementsInput)) {
+    p.cancel("Operation cancelled.");
+    process.exit(0);
+  }
+
+  return { subject: subjectContent, requirements: requirementsInput };
+}
+
+export async function confirmQuestionGeneration(
+  subject: SubjectContent,
+  requirements: string
+): Promise<boolean> {
+  const chapterList = subject.chapters
+    .map((ch) => `  ${ch.order}. ${ch.title}`)
+    .join("\n");
+
+  const requirementsPreview = requirements.length > 200
+    ? requirements.slice(0, 200) + "..."
+    : requirements;
+
+  p.note(
+    `Subject: ${subject.name}\nChapters to use:\n${chapterList}\n\nTotal content: ${(subject.totalCharCount / 1000).toFixed(1)}k characters\n\nRequirements preview:\n${requirementsPreview}\n\nModel: gpt-5.2`,
+    "Question Generation"
+  );
+
+  const confirm = await p.confirm({
+    message: `Generate exam questions for ${subject.chapters.length} chapters?`,
+  });
+
+  if (p.isCancel(confirm)) {
+    p.cancel("Operation cancelled.");
+    process.exit(0);
+  }
+
+  return confirm;
 }
 
 export async function confirmSummaryGeneration(

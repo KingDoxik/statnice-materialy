@@ -12,12 +12,14 @@ import {
   confirmGeneration,
   confirmResume,
   confirmSummaryGeneration,
+  confirmQuestionGeneration,
 } from "./cli/prompts";
 import {
   runGenerationPipeline,
   resumeGenerationPipeline,
 } from "./ai/passes";
 import { runSummaryPipeline } from "./ai/passes/summary";
+import { runQuestionPipeline } from "./ai/passes/questions";
 import { runWithConcurrency } from "./utils/parallel";
 import { PARALLEL_CONFIG } from "./config";
 
@@ -120,6 +122,31 @@ async function main() {
           `Error: ${error instanceof Error ? error.message : String(error)}`
         );
         p.outro(pc.yellow("Summary generation failed. Check temp files for partial results."));
+        process.exit(1);
+      }
+    } else if (action.type === "questions") {
+      // Question generation flow
+      const { subject, requirements } = action;
+
+      const confirmed = await confirmQuestionGeneration(subject, requirements);
+      if (!confirmed) {
+        p.cancel("Question generation cancelled.");
+        process.exit(0);
+      }
+
+      p.log.info(`\nGenerating exam questions for: ${pc.cyan(subject.name)}`);
+      p.log.info(
+        `Using ${subject.chapters.length} chapters (${(subject.totalCharCount / 1000).toFixed(1)}k chars)`
+      );
+
+      try {
+        await runQuestionPipeline(subject, requirements);
+        p.outro(pc.green("Question generation completed successfully!"));
+      } catch (error) {
+        p.log.error(
+          `Error: ${error instanceof Error ? error.message : String(error)}`
+        );
+        p.outro(pc.yellow("Question generation failed. Check temp files for partial results."));
         process.exit(1);
       }
     } else {

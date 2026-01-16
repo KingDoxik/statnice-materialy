@@ -77,3 +77,31 @@ export interface SummarySession {
   status: "pending" | "in_progress" | "completed" | "failed";
   error?: string;
 }
+
+// Question generation types
+export interface GeneratedQuestion {
+  title: string;
+  question: string;
+  answer: string;
+  relatedChapters: string[];
+}
+
+export interface QuestionGenerationInput {
+  subjectSlug: string;
+  subjectName: string;
+  requirements: string;
+  chapters: ChapterContent[];
+}
+
+export interface QuestionSession {
+  sessionId: string;
+  subject: SubjectContent;
+  requirements: string;
+  tempDir: string;
+  passes: PassResult[];
+  questions: GeneratedQuestion[];
+  startedAt: Date;
+  completedAt?: Date;
+  status: "pending" | "in_progress" | "completed" | "failed";
+  error?: string;
+}

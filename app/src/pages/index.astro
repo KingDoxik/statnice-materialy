@@ -31,6 +31,10 @@ for (const subject of subjects) {
     <header class="home-header">
       <h1>Statni zkouska IST - UX vyzkum a design</h1>
       <p class="subtitle">Studijni materialy pro pripravu na statni zkousku z programu Informacni systemy a technologie</p>
+      <a href="/exam" class="exam-mode-link">
+        <span class="exam-icon">?</span>
+        <span>Zkouškový mód</span>
+      </a>
     </header>
 
     <section class="subjects-grid">
@@ -74,6 +78,41 @@ for (const subject of subjects) {
     color: var(--text-muted);
     font-size: 1.0625rem;
     line-height: 1.6;
+  }
+
+  .exam-mode-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    text-decoration: none;
+    color: var(--text);
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .exam-mode-link:hover {
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+
+  .exam-icon {
+    width: 1.5rem;
+    height: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-accent);
+    color: white;
+    border-radius: 50%;
+    font-size: 0.875rem;
+    font-weight: 700;
   }
 
   .subjects-grid {

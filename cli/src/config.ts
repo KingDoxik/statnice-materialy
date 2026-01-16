@@ -24,4 +24,9 @@ export const CONTENT_ROOT = join(
   "../../app/src/content/subjects"
 );
 
+export const QUESTIONS_ROOT = join(
+  import.meta.dir,
+  "../../app/src/content/questions"
+);
+
 export const TEMP_ROOT = join(import.meta.dir, "../temp");
